@@ -32,63 +32,61 @@ if test $x -eq 1; then
     echo "2) others"
     echo "##################"
     read v
-    
+
     insPath=/root/l2tpInstall
     mkdir -p $insPath
-    # Get ip address
-    IP=`ifconfig | grep 'inet addr:'| grep -v '127.0.0.*' | cut -d: -f2 | awk '{ print $1}' | head -1`;
 
     echo
     echo "##################################"
     echo "Downloading the component"
     echo "##################################"
-    apt-get update
-    apt-get install libpam0g-dev libssl-dev make gcc
-    
+
     ipsecConf=
     strongswanConf=
     ipsecSecrets=
     ipsecD=
     isInApt="$(apt-cache search strongswan | wc -l)"
-    isInApt=0 # I don't know why the strongswan from apt repo does not work here T_T
+    # isInApt=0 # I don't know why the strongswan from apt repo does not work here T_T
     if test $isInApt -gt 0; then
-	echo "#################################"
-	echo "Strongswan is found in apt source."
-	echo "#################################"
-	apt-get install strongswan
-	ipsecConf=/etc/ipsec.conf
-	strongswanConf=/etc/strongswan.conf
-	ipsecSecrets=/etc/ipsec.secrets
-	ipsecD=/etc/ipsec.d
+        echo "#################################"
+        echo "Strongswan is found in apt source."
+        echo "#################################"
+        apt-get install strongswan
+        ipsecConf=/etc/ipsec.conf
+        strongswanConf=/etc/strongswan.conf
+        ipsecSecrets=/etc/ipsec.secrets
+        ipsecD=/etc/ipsec.d
     else
-	echo "#################################"
-	echo "Install Strongswan from source."	
-	echo "#################################"
-	ipsecConf=/usr/local/etc/ipsec.conf
-	strongswanConf=/usr/local/etc/strongswan.conf
-	ipsecSecrets=/usr/local/etc/ipsec.secrets
-	ipsecD=/usr/local/etc/ipsec.d
-	cd /tmp
-	wget https://download.strongswan.org/strongswan-5.2.2.tar.gz --no-check-certificate
+        apt-get update
+        apt-get install libpam0g-dev libssl-dev make gcc
+        echo "#################################"
+        echo "Install Strongswan from source."
+        echo "#################################"
+        ipsecConf=/usr/local/etc/ipsec.conf
+        strongswanConf=/usr/local/etc/strongswan.conf
+        ipsecSecrets=/usr/local/etc/ipsec.secrets
+        ipsecD=/usr/local/etc/ipsec.d
+        cd /tmp
+        wget https://download.strongswan.org/strongswan-5.9.5.tar.gz --no-check-certificate
         tar xzf strongswan*.tar.gz
-	cd strongswan-*
+        cd strongswan-*
 
 
-	if test $v -eq 1; then
-	    ./configure  --enable-eap-identity --enable-eap-md5 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity --enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp --enable-kernel-libipsec
-	elif test $v -eq 2; then
-	    ./configure  --enable-eap-identity --enable-eap-md5 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity --enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp
-	fi
-	
-	make && make install
+        if test $v -eq 1; then
+            ./configure  --enable-eap-identity --enable-eap-md5 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap  --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity --enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp --enable-kernel-libipsec
+        elif test $v -eq 2; then
+            ./configure  --enable-eap-identity --enable-eap-md5 --enable-eap-mschapv2 --enable-eap-tls --enable-eap-ttls --enable-eap-peap --enable-eap-tnc --enable-eap-dynamic --enable-eap-radius --enable-xauth-eap --enable-xauth-pam  --enable-dhcp  --enable-openssl  --enable-addrblock --enable-unity --enable-certexpire --enable-radattr --enable-tools --enable-openssl --disable-gmp
+        fi
+
+        make && make install
     fi
-    
+
     ipsec version
 
     if test $? -ne 0; then
-	echo "ipsec install failed. Please check the log."
-	echo "Error."
-	exit
+        echo "ipsec install failed. Please check the log."
+        echo "Error."
+        exit
     fi
 
     echo
@@ -124,7 +122,7 @@ if test $x -eq 1; then
     mv $ipsecConf $ipsecConf.bac 2>/dev/null
     cat > $ipsecConf  <<END
 config setup
-    uniqueids=never 
+    uniqueids=never
 
 conn iOS_cert
     keyexchange=ikev1
@@ -166,7 +164,7 @@ conn networkmanager-strongswan
 
 conn windows7
     keyexchange=ikev2
-    ike=aes256-sha1-modp1024! 
+    ike=aes256-sha1-modp1024!
     rekey=no
     left=%defaultroute
     leftauth=pubkey
@@ -189,7 +187,6 @@ END
     cat > $strongswanConf <<END
 charon {
     load_modular = yes
-    duplicheck.enable = no
     compress = yes
     plugins {
         include strongswan.d/charon/*.conf
@@ -242,7 +239,7 @@ END
     iptables -t nat -A POSTROUTING -s 10.31.0.0/24 -o $netCard -j MASQUERADE
     iptables -t nat -A POSTROUTING -s 10.31.1.0/24 -o $netCard -j MASQUERADE
     iptables -t nat -A POSTROUTING -s 10.31.2.0/24 -o $netCard -j MASQUERADE
-    
+
     iptables --table nat --append POSTROUTING --jump MASQUERADE
 
     iptables-save > /etc/iptables.rules
@@ -255,8 +252,6 @@ EOF
     echo
     echo "################################################"
     echo "Success!"
-    echo "Use this to connect your L2TP service."
-    echo "IP: $IP"
     echo "Secretkey: $k"
     echo "CA cert: /root/l2tpInstall/ca.cert.pem"
     echo "Don't forget to add a new user later, LOL."
@@ -274,17 +269,17 @@ elif test $x -eq 2; then
     ipsecSecrets=
     ipsecD=
     isInApt="$(apt-cache search strongswan | wc -l)"
-    isInApt=0
+    #isInApt=0
     if test $isInApt -gt 0; then
-	ipsecConf=/etc/ipsec.conf
+        ipsecConf=/etc/ipsec.conf
         strongswanConf=/etc/strongswan.conf
         ipsecSecrets=/etc/ipsec.secrets
-	ipsecD=/etc/ipsec.d
+        ipsecD=/etc/ipsec.d
     else
         ipsecConf=/usr/local/etc/ipsec.conf
         strongswanConf=/usr/local/etc/strongswan.conf
         ipsecSecrets=/usr/local/etc/ipsec.secrets
-	ipsecD=/usr/local/etc/ipsec.d
+        ipsecD=/usr/local/etc/ipsec.d
     fi
 
 
