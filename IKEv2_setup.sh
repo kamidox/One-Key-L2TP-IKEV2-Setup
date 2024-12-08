@@ -25,7 +25,7 @@ read x
 if test $x -eq 1; then
     echo "Install strongswan ..."
     sudo apt update
-    sudo apt install strongswan strongswan-pki libcharon-extra-plugins libcharon-extauth-plugins libstrongswan-extra-plugins
+    sudo apt install strongswan strongswan-pki libcharon-extra-plugins libcharon-extauth-plugins libstrongswan-extra-plugins libtss2-tcti-tabrmd0
 
     echo "Setup pki ..."
     mkdir -p ~/pki/cacerts
@@ -56,7 +56,7 @@ if test $x -eq 1; then
     echo "Configuring StrongSwan ..."
     sudo mv /etc/ipsec.conf /etc/ipsec.conf.bak
 
-    cat > /etc/ipsec.conf <<END
+    sudo cat > /etc/ipsec.conf <<END
 config setup
     charondebug="ike 1, knl 1, cfg 0"
     uniqueids=no
@@ -90,7 +90,7 @@ END
     echo "Configuring VPN Authentication ..."
     sudo mv /etc/ipsec.secrets /etc/ipsec.secrets.bak
 
-    cat > /etc/ipsec.secrets <<END
+    sudo cat > /etc/ipsec.secrets <<END
 : RSA "server-key.pem"
 END
 
@@ -101,7 +101,7 @@ END
     echo "Configuring /etc/ufw/before.rules ..."
     sudo mv /etc/ufw/before.rules /etc/ufw/before.rules.bak
 
-    cat > /etc/ufw/before.rules <<END
+    sudo cat > /etc/ufw/before.rules <<END
 #
 # rules.before
 #
@@ -206,7 +206,7 @@ END
     echo "Configuring /etc/ufw/sysctl.conf ..."
     sudo mv /etc/ufw/sysctl.conf /etc/ufw/sysctl.conf.bak
 
-    cat > /etc/ufw/sysctl.conf <<END
+    sudo cat > /etc/ufw/sysctl.conf <<END
 #
 # Configuration file for setting network variables. Please note these settings
 # override /etc/sysctl.conf and /etc/sysctl.d. If you prefer to use
@@ -268,7 +268,7 @@ elif test $x -eq 2; then
     read p
 
     # Add an new account
-    echo "$u : EAP \"$p\"" >> /etc/ipsec.secrets
+    sudo echo "$u : EAP \"$p\"" >> /etc/ipsec.secrets
 
     sudo ipsec stop
     sudo systemctl restart strongswan-starter
